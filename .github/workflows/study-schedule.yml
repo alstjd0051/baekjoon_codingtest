@@ -16,44 +16,61 @@ jobs:
     env:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Resolve today's problem in KST
         id: today
         run: |
           python - <<'PY'
+          import csv
           from datetime import datetime
           from zoneinfo import ZoneInfo
           import os
+          import re
+          from pathlib import Path
 
-          schedule = {
-              "2026-04-06": ("1629", "곱셈"),
-              "2026-04-07": ("11509", "풍선 맞추기"),
-              "2026-04-08": ("14425", "문자열 집합"),
-              "2026-04-09": ("9012", "괄호"),
-              "2026-04-10": ("1655", "가운데를 말해요"),
-              "2026-04-11": ("5430", "AC"),
-              "2026-04-12": ("11286", "절댓값 힙"),
-              "2026-04-13": ("3107", "IPv6"),
-              "2026-04-14": ("1141", "접두사"),
-              "2026-04-15": ("20529", "가장 가까운 세 사람의 심리적 거리"),
-              "2026-04-16": ("9251", "LCS"),
-              "2026-04-17": ("11478", "서로 다른 부분 문자열의 개수"),
-              "2026-04-18": ("3568", "iSharp"),
-              "2026-04-19": ("6324", "URLs"),
-              "2026-04-20": ("1260", "DFS와 BFS"),
-              "2026-04-21": ("2644", "촌수계산"),
-              "2026-04-22": ("7576", "토마토"),
-              "2026-04-23": ("14725", "개미굴"),
-              "2026-04-24": ("12849", "본대 산책"),
-              "2026-04-25": ("3273", "두 수의 합"),
-              "2026-04-26": ("2467", "용액"),
-              "2026-04-27": ("11053", "가장 긴 증가하는 부분 수열"),
-              "2026-04-28": ("1912", "연속합"),
-              "2026-04-29": ("14728", "벼락치기"),
-              "2026-04-30": ("9252", "LCS2"),
-              "2026-05-01": ("1005", "ACM Craft"),
-              "2026-05-02": ("13706", "제곱근"),
-              "2026-05-03": ("10827", "a^b"),
-          }
+          csv_path = Path("assets/[AI 24기] 코딩테스트 스터디 일정 - 24기 _ 코테 스터디.csv")
+          text = csv_path.read_text(encoding="utf-8-sig")
+          year_match = re.search(r"(\\d{4})\\.\\d{1,2}\\.\\d{1,2}\\s*-\\s*(\\d{4})\\.\\d{1,2}\\.\\d{1,2}", text)
+          year = int(year_match.group(1)) if year_match else datetime.now(ZoneInfo("Asia/Seoul")).year
+
+          rows = list(csv.reader(text.splitlines()))
+          schedule = {}
+          for i, row in enumerate(rows):
+              if "일자" not in row:
+                  continue
+              date_idx = row.index("일자")
+              if i + 1 >= len(rows):
+                  continue
+              problem_row = rows[i + 1]
+              if "문제" not in problem_row:
+                  continue
+              problem_idx = problem_row.index("문제")
+
+              for offset in range(1, 8):
+                  if date_idx + offset >= len(row) or problem_idx + offset >= len(problem_row):
+                      continue
+                  date_cell = row[date_idx + offset].strip()
+                  problem_cell = problem_row[problem_idx + offset].strip()
+                  if not date_cell or not problem_cell:
+                      continue
+
+                  date_match = re.fullmatch(r"(\\d{1,2})/(\\d{1,2})", date_cell)
+                  problem_match = re.fullmatch(r"(.*?)\\((\\d+)\\)", problem_cell)
+                  if date_match is None or problem_match is None:
+                      continue
+
+                  month, day = int(date_match.group(1)), int(date_match.group(2))
+                  iso_date = f"{year:04d}-{month:02d}-{day:02d}"
+                  title = problem_match.group(1).strip()
+                  problem_id = problem_match.group(2).strip()
+                  schedule[iso_date] = (problem_id, title)
 
           today = datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat()
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
@@ -67,8 +84,18 @@ jobs:
                   out.write(f"problem_id={pid}\n")
                   out.write(f"problem_title={title}\n")
                   out.write(f"boj_url=https://www.acmicpc.net/problem/{pid}\n")
-                  out.write(f"folder=boj-{pid}\n")
+                  out.write(f"doc_path=docs/problems/{pid}.md\n")
           PY
+
+      - name: Crawl today's problem to docs
+        if: steps.today.outputs.active == 'true'
+        run: |
+          python crawl_boj_problems.py \
+            --source csv \
+            --target-date "${{ steps.today.outputs.date }}" \
+            --output "docs/problems.json" \
+            --docs-dir "docs/problems" \
+            --delay 0.2
 
       - name: Write summary
         run: |
@@ -87,7 +114,7 @@ jobs:
             echo ""
             echo "- 날짜(KST): ${{ steps.today.outputs.date }}"
             echo "- 오늘의 문제: [${{ steps.today.outputs.problem_id }} - ${{ steps.today.outputs.problem_title }}](${{ steps.today.outputs.boj_url }})"
-            echo "- 로컬 폴더 권장: \`${{ steps.today.outputs.folder }}\`"
+            echo "- 문서 경로: \`${{ steps.today.outputs.doc_path }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create issue for today's problem
@@ -99,7 +126,7 @@ jobs:
             const problemId = "${{ steps.today.outputs.problem_id }}";
             const problemTitle = "${{ steps.today.outputs.problem_title }}";
             const bojUrl = "${{ steps.today.outputs.boj_url }}";
-            const folder = "${{ steps.today.outputs.folder }}";
+            const docPath = "${{ steps.today.outputs.doc_path }}";
             const title = `[코테스터디] ${date} - ${problemId} ${problemTitle}`;
 
             const { data: issues } = await github.rest.issues.listForRepo({
@@ -120,7 +147,7 @@ jobs:
               "",
               `- 날짜: ${date} (KST)`,
               `- 문제: [${problemId} - ${problemTitle}](${bojUrl})`,
-              `- 권장 폴더명: \`${folder}\``,
+              `- 문서 경로: \`${docPath}\``,
               "",
               "체크리스트",
               "- [ ] 문제 읽기",
@@ -144,7 +171,7 @@ jobs:
           PROBLEM_ID: ${{ steps.today.outputs.problem_id }}
           PROBLEM_TITLE: ${{ steps.today.outputs.problem_title }}
           BOJ_URL: ${{ steps.today.outputs.boj_url }}
-          FOLDER: ${{ steps.today.outputs.folder }}
+          DOC_PATH: ${{ steps.today.outputs.doc_path }}
         run: |
           python - <<'PY'
           import json
@@ -155,7 +182,7 @@ jobs:
               "📚 *코테 스터디 오늘의 문제 알림*\n"
               f"- 날짜(KST): {os.environ['DATE']}\n"
               f"- 문제: <{os.environ['BOJ_URL']}|{os.environ['PROBLEM_ID']} - {os.environ['PROBLEM_TITLE']}>\n"
-              f"- 권장 폴더: `{os.environ['FOLDER']}`\n"
+              f"- 문서 경로: `{os.environ['DOC_PATH']}`\n"
               "- 모두 화이팅!"
           )
 
