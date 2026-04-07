@@ -93,7 +93,7 @@ jobs:
           python crawl_boj_problems.py \
             --source csv \
             --target-date "${{ steps.today.outputs.date }}" \
-            --output "docs/problems.json" \
+            --output "docs/problems.md" \
             --docs-dir "docs/problems" \
             --delay 0.2
 
