@@ -1,0 +1,169 @@
+name: Study Schedule Reminder
+
+on:
+  schedule:
+    # 09:05 KST (00:05 UTC) daily
+    - cron: "5 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - name: Resolve today's problem in KST
+        id: today
+        run: |
+          python - <<'PY'
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+          import os
+
+          schedule = {
+              "2026-04-06": ("1629", "곱셈"),
+              "2026-04-07": ("11509", "풍선 맞추기"),
+              "2026-04-08": ("14425", "문자열 집합"),
+              "2026-04-09": ("9012", "괄호"),
+              "2026-04-10": ("1655", "가운데를 말해요"),
+              "2026-04-11": ("5430", "AC"),
+              "2026-04-12": ("11286", "절댓값 힙"),
+              "2026-04-13": ("3107", "IPv6"),
+              "2026-04-14": ("1141", "접두사"),
+              "2026-04-15": ("20529", "가장 가까운 세 사람의 심리적 거리"),
+              "2026-04-16": ("9251", "LCS"),
+              "2026-04-17": ("11478", "서로 다른 부분 문자열의 개수"),
+              "2026-04-18": ("3568", "iSharp"),
+              "2026-04-19": ("6324", "URLs"),
+              "2026-04-20": ("1260", "DFS와 BFS"),
+              "2026-04-21": ("2644", "촌수계산"),
+              "2026-04-22": ("7576", "토마토"),
+              "2026-04-23": ("14725", "개미굴"),
+              "2026-04-24": ("12849", "본대 산책"),
+              "2026-04-25": ("3273", "두 수의 합"),
+              "2026-04-26": ("2467", "용액"),
+              "2026-04-27": ("11053", "가장 긴 증가하는 부분 수열"),
+              "2026-04-28": ("1912", "연속합"),
+              "2026-04-29": ("14728", "벼락치기"),
+              "2026-04-30": ("9252", "LCS2"),
+              "2026-05-01": ("1005", "ACM Craft"),
+              "2026-05-02": ("13706", "제곱근"),
+              "2026-05-03": ("10827", "a^b"),
+          }
+
+          today = datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat()
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              if today not in schedule:
+                  out.write("active=false\n")
+                  out.write(f"date={today}\n")
+              else:
+                  pid, title = schedule[today]
+                  out.write("active=true\n")
+                  out.write(f"date={today}\n")
+                  out.write(f"problem_id={pid}\n")
+                  out.write(f"problem_title={title}\n")
+                  out.write(f"boj_url=https://www.acmicpc.net/problem/{pid}\n")
+                  out.write(f"folder=boj-{pid}\n")
+          PY
+
+      - name: Write summary
+        run: |
+          if [ "${{ steps.today.outputs.active }}" != "true" ]; then
+            {
+              echo "## 코테 스터디 일정 알림"
+              echo ""
+              echo "- 오늘(KST): ${{ steps.today.outputs.date }}"
+              echo "- 오늘은 등록된 스터디 문제가 없습니다."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          {
+            echo "## 코테 스터디 일정 알림"
+            echo ""
+            echo "- 날짜(KST): ${{ steps.today.outputs.date }}"
+            echo "- 오늘의 문제: [${{ steps.today.outputs.problem_id }} - ${{ steps.today.outputs.problem_title }}](${{ steps.today.outputs.boj_url }})"
+            echo "- 로컬 폴더 권장: \`${{ steps.today.outputs.folder }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create issue for today's problem
+        if: steps.today.outputs.active == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const date = "${{ steps.today.outputs.date }}";
+            const problemId = "${{ steps.today.outputs.problem_id }}";
+            const problemTitle = "${{ steps.today.outputs.problem_title }}";
+            const bojUrl = "${{ steps.today.outputs.boj_url }}";
+            const folder = "${{ steps.today.outputs.folder }}";
+            const title = `[코테스터디] ${date} - ${problemId} ${problemTitle}`;
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "all",
+              per_page: 100,
+            });
+
+            const exists = issues.find((i) => i.title === title);
+            if (exists) {
+              core.info(`이미 생성된 이슈가 있어 생성을 건너뜁니다: #${exists.number}`);
+              return;
+            }
+
+            const body = [
+              "오늘의 코딩테스트 스터디 문제입니다.",
+              "",
+              `- 날짜: ${date} (KST)`,
+              `- 문제: [${problemId} - ${problemTitle}](${bojUrl})`,
+              `- 권장 폴더명: \`${folder}\``,
+              "",
+              "체크리스트",
+              "- [ ] 문제 읽기",
+              "- [ ] 풀이 구현",
+              "- [ ] 예외 케이스 점검",
+              "- [ ] README/메모 정리",
+            ].join("\n");
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ["study-schedule", "boj"],
+            });
+
+      - name: Send Slack daily notification
+        if: steps.today.outputs.active == 'true' && env.SLACK_WEBHOOK_URL != ''
+        env:
+          DATE: ${{ steps.today.outputs.date }}
+          PROBLEM_ID: ${{ steps.today.outputs.problem_id }}
+          PROBLEM_TITLE: ${{ steps.today.outputs.problem_title }}
+          BOJ_URL: ${{ steps.today.outputs.boj_url }}
+          FOLDER: ${{ steps.today.outputs.folder }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          text = (
+              "📚 *코테 스터디 오늘의 문제 알림*\n"
+              f"- 날짜(KST): {os.environ['DATE']}\n"
+              f"- 문제: <{os.environ['BOJ_URL']}|{os.environ['PROBLEM_ID']} - {os.environ['PROBLEM_TITLE']}>\n"
+              f"- 권장 폴더: `{os.environ['FOLDER']}`\n"
+              "- 모두 화이팅!"
+          )
+
+          payload = json.dumps({"text": text}).encode("utf-8")
+          req = urllib.request.Request(
+              os.environ["SLACK_WEBHOOK_URL"],
+              data=payload,
+              headers={"Content-Type": "application/json"},
+          )
+          urllib.request.urlopen(req).read()
+          PY

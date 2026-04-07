@@ -1,0 +1,55 @@
+# 코딩테스트 스터디 일정 (24기)
+
+- 기간: `2026-04-06` ~ `2026-05-03` (4주)
+- 기준 데이터: `assets/[AI 24기] 코딩테스트 스터디 일정 - 24기 _ 코테 스터디.csv`
+- 자동 알림: `.github/workflows/study-schedule.yml` (매일 09:05 KST)
+
+## 주차별 문제 일정
+
+| 날짜 | 문제 번호 | 문제명 | 링크 |
+| --- | ---: | --- | --- |
+| 2026-04-06 | 1629 | 곱셈 | [바로가기](https://www.acmicpc.net/problem/1629) |
+| 2026-04-07 | 11509 | 풍선 맞추기 | [바로가기](https://www.acmicpc.net/problem/11509) |
+| 2026-04-08 | 14425 | 문자열 집합 | [바로가기](https://www.acmicpc.net/problem/14425) |
+| 2026-04-09 | 9012 | 괄호 | [바로가기](https://www.acmicpc.net/problem/9012) |
+| 2026-04-10 | 1655 | 가운데를 말해요 | [바로가기](https://www.acmicpc.net/problem/1655) |
+| 2026-04-11 | 5430 | AC | [바로가기](https://www.acmicpc.net/problem/5430) |
+| 2026-04-12 | 11286 | 절댓값 힙 | [바로가기](https://www.acmicpc.net/problem/11286) |
+| 2026-04-13 | 3107 | IPv6 | [바로가기](https://www.acmicpc.net/problem/3107) |
+| 2026-04-14 | 1141 | 접두사 | [바로가기](https://www.acmicpc.net/problem/1141) |
+| 2026-04-15 | 20529 | 가장 가까운 세 사람의 심리적 거리 | [바로가기](https://www.acmicpc.net/problem/20529) |
+| 2026-04-16 | 9251 | LCS | [바로가기](https://www.acmicpc.net/problem/9251) |
+| 2026-04-17 | 11478 | 서로 다른 부분 문자열의 개수 | [바로가기](https://www.acmicpc.net/problem/11478) |
+| 2026-04-18 | 3568 | iSharp | [바로가기](https://www.acmicpc.net/problem/3568) |
+| 2026-04-19 | 6324 | URLs | [바로가기](https://www.acmicpc.net/problem/6324) |
+| 2026-04-20 | 1260 | DFS와 BFS | [바로가기](https://www.acmicpc.net/problem/1260) |
+| 2026-04-21 | 2644 | 촌수계산 | [바로가기](https://www.acmicpc.net/problem/2644) |
+| 2026-04-22 | 7576 | 토마토 | [바로가기](https://www.acmicpc.net/problem/7576) |
+| 2026-04-23 | 14725 | 개미굴 | [바로가기](https://www.acmicpc.net/problem/14725) |
+| 2026-04-24 | 12849 | 본대 산책 | [바로가기](https://www.acmicpc.net/problem/12849) |
+| 2026-04-25 | 3273 | 두 수의 합 | [바로가기](https://www.acmicpc.net/problem/3273) |
+| 2026-04-26 | 2467 | 용액 | [바로가기](https://www.acmicpc.net/problem/2467) |
+| 2026-04-27 | 11053 | 가장 긴 증가하는 부분 수열 | [바로가기](https://www.acmicpc.net/problem/11053) |
+| 2026-04-28 | 1912 | 연속합 | [바로가기](https://www.acmicpc.net/problem/1912) |
+| 2026-04-29 | 14728 | 벼락치기 | [바로가기](https://www.acmicpc.net/problem/14728) |
+| 2026-04-30 | 9252 | LCS2 | [바로가기](https://www.acmicpc.net/problem/9252) |
+| 2026-05-01 | 1005 | ACM Craft | [바로가기](https://www.acmicpc.net/problem/1005) |
+| 2026-05-02 | 13706 | 제곱근 | [바로가기](https://www.acmicpc.net/problem/13706) |
+| 2026-05-03 | 10827 | a^b | [바로가기](https://www.acmicpc.net/problem/10827) |
+
+## GitHub Actions 동작 방식
+
+- 매일 09:05 KST에 실행됩니다.
+- 해당 날짜가 일정표에 있으면 "오늘의 문제" 요약을 남기고 이슈를 1개 생성합니다.
+- 같은 제목의 이슈가 이미 있으면 중복 생성하지 않습니다.
+- `SLACK_WEBHOOK_URL` 시크릿이 설정되어 있으면, 매일 오늘의 문제를 Slack으로 전송합니다.
+
+## 3팀 Slack 허들 일정
+
+- 고정 일정: 매주 화/목 20:00 ~ 21:00 (KST)
+- 허들 링크: <https://app.slack.com/huddle/T0A1NP4J98F/C0AR4EQ7CLU>
+- 자동 알림: `.github/workflows/slack-huddle-reminder.yml`
+
+## GitHub Secrets 설정
+
+- `SLACK_WEBHOOK_URL`: Slack Incoming Webhook URL

@@ -1,0 +1,49 @@
+name: Slack Huddle Reminder
+
+on:
+  schedule:
+    # Tue/Thu 20:00 KST (11:00 UTC)
+    - cron: "0 11 * * 2,4"
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - name: Write summary
+        run: |
+          {
+            echo "## 3팀 Slack 허들 리마인더"
+            echo ""
+            echo "- 시간: 매주 화/목 20:00 ~ 21:00 (KST)"
+            echo "- 링크: https://app.slack.com/huddle/T0A1NP4J98F/C0AR4EQ7CLU"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Send Slack huddle reminder
+        if: env.SLACK_WEBHOOK_URL != ''
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+
+          now = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M")
+          text = (
+              "🔔 *3팀 Slack 허들 미팅 알림*\n"
+              f"- 시작 시각: {now} (KST)\n"
+              "- 정기 일정: 매주 화/목 20:00 ~ 21:00\n"
+              "- 참여 링크: https://app.slack.com/huddle/T0A1NP4J98F/C0AR4EQ7CLU"
+          )
+
+          payload = json.dumps({"text": text}).encode("utf-8")
+          req = urllib.request.Request(
+              os.environ["SLACK_WEBHOOK_URL"],
+              data=payload,
+              headers={"Content-Type": "application/json"},
+          )
+          urllib.request.urlopen(req).read()
+          PY
