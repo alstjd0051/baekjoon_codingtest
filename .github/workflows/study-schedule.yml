@@ -183,7 +183,7 @@ jobs:
               f"- 날짜(KST): {os.environ['DATE']}\n"
               f"- 문제: <{os.environ['BOJ_URL']}|{os.environ['PROBLEM_ID']} - {os.environ['PROBLEM_TITLE']}>\n"
               f"- 문서 경로: `{os.environ['DOC_PATH']}`\n"
-              "- 모두 화이팅!"
+              "- 모두 코딩테스트의 문제를 풀어주세요"
           )
 
           payload = json.dumps({"text": text}).encode("utf-8")
