@@ -185,17 +185,20 @@ jobs:
           PROBLEM_TITLE: ${{ steps.today.outputs.problem_title }}
           BOJ_URL: ${{ steps.today.outputs.boj_url }}
           DOC_PATH: ${{ steps.today.outputs.doc_path }}
+          DOC_URL: ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/${{ steps.today.outputs.doc_path }}
         run: |
           python - <<'PY'
           import json
           import os
           import urllib.request
 
+          doc_path = os.environ["DOC_PATH"]
+          doc_url = os.environ["DOC_URL"]
           text = (
               "📚 *코테 스터디 오늘의 문제 알림*\n"
               f"- 날짜(KST): {os.environ['DATE']}\n"
               f"- 문제: <{os.environ['BOJ_URL']}|{os.environ['PROBLEM_ID']} - {os.environ['PROBLEM_TITLE']}>\n"
-              f"- 문서 경로: `{os.environ['DOC_PATH']}`\n"
+              f"- 문서 경로: <{doc_url}|{doc_path}>\n"
               "- 모두 코딩테스트의 문제를 풀어주세요"
           )
 
