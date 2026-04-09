@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   issues: write
 
 jobs:
@@ -37,7 +37,7 @@ jobs:
 
           csv_path = Path("assets/[AI 24기] 코딩테스트 스터디 일정 - 24기 _ 코테 스터디.csv")
           text = csv_path.read_text(encoding="utf-8-sig")
-          year_match = re.search(r"(\\d{4})\\.\\d{1,2}\\.\\d{1,2}\\s*-\\s*(\\d{4})\\.\\d{1,2}\\.\\d{1,2}", text)
+          year_match = re.search(r"(\d{4})\.\d{1,2}\.\d{1,2}\s*-\s*(\d{4})\.\d{1,2}\.\d{1,2}", text)
           year = int(year_match.group(1)) if year_match else datetime.now(ZoneInfo("Asia/Seoul")).year
 
           rows = list(csv.reader(text.splitlines()))
@@ -61,8 +61,8 @@ jobs:
                   if not date_cell or not problem_cell:
                       continue
 
-                  date_match = re.fullmatch(r"(\\d{1,2})/(\\d{1,2})", date_cell)
-                  problem_match = re.fullmatch(r"(.*?)\\((\\d+)\\)", problem_cell)
+                  date_match = re.fullmatch(r"(\d{1,2})/(\d{1,2})", date_cell)
+                  problem_match = re.fullmatch(r"(.*?)\((\d+)\)", problem_cell)
                   if date_match is None or problem_match is None:
                       continue
 
@@ -96,6 +96,19 @@ jobs:
             --output "docs/problems.md" \
             --docs-dir "docs/problems" \
             --delay 0.2
+
+      - name: Commit crawled docs to repository
+        if: steps.today.outputs.active == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/problems.md docs/problems/
+          if git diff --staged --quiet; then
+            echo "문서 변경 없음"
+          else
+            git commit -m "docs: 오늘의 백준 문제 스냅샷 (${{ steps.today.outputs.date }} ${{ steps.today.outputs.problem_id }})"
+            git push
+          fi
 
       - name: Write summary
         run: |
