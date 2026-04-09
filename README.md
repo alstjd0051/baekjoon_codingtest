@@ -6,10 +6,10 @@
 
 | 알림 | 날짜       | 문제 번호 | 문제명                            | 링크                                              |
 | ---- | ---------- | --------- | --------------------------------- | ------------------------------------------------- |
-|      | 2026-04-06 | 1629      | 곱셈                              | [바로가기](https://www.acmicpc.net/problem/1629)  |
-|      | 2026-04-07 | 11509     | 풍선 맞추기                       | [바로가기](https://www.acmicpc.net/problem/11509) |
-|      | 2026-04-08 | 14425     | 문자열 집합                       | [바로가기](https://www.acmicpc.net/problem/14425) |
-|      | 2026-04-09 | 9012      | 괄호                              | [바로가기](https://www.acmicpc.net/problem/9012)  |
+| ✓    | 2026-04-06 | 1629      | 곱셈                              | [바로가기](https://www.acmicpc.net/problem/1629)  |
+| ✓    | 2026-04-07 | 11509     | 풍선 맞추기                       | [바로가기](https://www.acmicpc.net/problem/11509) |
+| ✓    | 2026-04-08 | 14425     | 문자열 집합                       | [바로가기](https://www.acmicpc.net/problem/14425) |
+| ✓    | 2026-04-09 | 9012      | 괄호                              | [바로가기](https://www.acmicpc.net/problem/9012)  |
 |      | 2026-04-10 | 1655      | 가운데를 말해요                   | [바로가기](https://www.acmicpc.net/problem/1655)  |
 |      | 2026-04-11 | 5430      | AC                                | [바로가기](https://www.acmicpc.net/problem/5430)  |
 |      | 2026-04-12 | 11286     | 절댓값 힙                         | [바로가기](https://www.acmicpc.net/problem/11286) |
