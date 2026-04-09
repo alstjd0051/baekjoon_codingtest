@@ -4,4 +4,4 @@
 
 | 날짜 | 문제 번호 | 문제명 | 링크 | 문서 |
 | --- | --- | --- | --- | --- |
-| 2026-04-09 | 9012 | 괄호 | [바로가기](https://www.acmicpc.net/problem/9012) | `docs/problems/9012.md` |
+| 2026-04-08 | 14425 | 문자열 집합 | [바로가기](https://www.acmicpc.net/problem/14425) | `docs/problems/14425.md` |
