@@ -1,0 +1,212 @@
+name: Study Schedule Reminder
+
+on:
+  schedule:
+    # 09:05 KST (00:05 UTC) daily
+    - cron: "5 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Resolve today's problem in KST
+        id: today
+        run: |
+          python - <<'PY'
+          import csv
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+          import os
+          import re
+          from pathlib import Path
+
+          csv_path = Path("assets/[AI 24기] 코딩테스트 스터디 일정 - 24기 _ 코테 스터디.csv")
+          text = csv_path.read_text(encoding="utf-8-sig")
+          year_match = re.search(r"(\d{4})\.\d{1,2}\.\d{1,2}\s*-\s*(\d{4})\.\d{1,2}\.\d{1,2}", text)
+          year = int(year_match.group(1)) if year_match else datetime.now(ZoneInfo("Asia/Seoul")).year
+
+          rows = list(csv.reader(text.splitlines()))
+          schedule = {}
+          for i, row in enumerate(rows):
+              if "일자" not in row:
+                  continue
+              date_idx = row.index("일자")
+              if i + 1 >= len(rows):
+                  continue
+              problem_row = rows[i + 1]
+              if "문제" not in problem_row:
+                  continue
+              problem_idx = problem_row.index("문제")
+
+              for offset in range(1, 8):
+                  if date_idx + offset >= len(row) or problem_idx + offset >= len(problem_row):
+                      continue
+                  date_cell = row[date_idx + offset].strip()
+                  problem_cell = problem_row[problem_idx + offset].strip()
+                  if not date_cell or not problem_cell:
+                      continue
+
+                  date_match = re.fullmatch(r"(\d{1,2})/(\d{1,2})", date_cell)
+                  problem_match = re.fullmatch(r"(.*?)\((\d+)\)", problem_cell)
+                  if date_match is None or problem_match is None:
+                      continue
+
+                  month, day = int(date_match.group(1)), int(date_match.group(2))
+                  iso_date = f"{year:04d}-{month:02d}-{day:02d}"
+                  title = problem_match.group(1).strip()
+                  problem_id = problem_match.group(2).strip()
+                  schedule[iso_date] = (problem_id, title)
+
+          today = datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat()
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              if today not in schedule:
+                  out.write("active=false\n")
+                  out.write(f"date={today}\n")
+              else:
+                  pid, title = schedule[today]
+                  out.write("active=true\n")
+                  out.write(f"date={today}\n")
+                  out.write(f"problem_id={pid}\n")
+                  out.write(f"problem_title={title}\n")
+                  out.write(f"boj_url=https://www.acmicpc.net/problem/{pid}\n")
+                  out.write(f"doc_path=docs/problems/{pid}.md\n")
+          PY
+
+      - name: Crawl today's problem to docs
+        if: steps.today.outputs.active == 'true'
+        run: |
+          python crawl_boj_problems.py \
+            --source csv \
+            --target-date "${{ steps.today.outputs.date }}" \
+            --output "docs/problems.md" \
+            --docs-dir "docs/problems" \
+            --delay 0.2
+
+      - name: Commit crawled docs to repository
+        if: steps.today.outputs.active == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/problems.md docs/problems/
+          if git diff --staged --quiet; then
+            echo "문서 변경 없음"
+          else
+            git commit -m "docs: 오늘의 백준 문제 스냅샷 (${{ steps.today.outputs.date }} ${{ steps.today.outputs.problem_id }})"
+            git push
+          fi
+
+      - name: Write summary
+        run: |
+          if [ "${{ steps.today.outputs.active }}" != "true" ]; then
+            {
+              echo "## 코테 스터디 일정 알림"
+              echo ""
+              echo "- 오늘(KST): ${{ steps.today.outputs.date }}"
+              echo "- 오늘은 등록된 스터디 문제가 없습니다."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          {
+            echo "## 코테 스터디 일정 알림"
+            echo ""
+            echo "- 날짜(KST): ${{ steps.today.outputs.date }}"
+            echo "- 오늘의 문제: [${{ steps.today.outputs.problem_id }} - ${{ steps.today.outputs.problem_title }}](${{ steps.today.outputs.boj_url }})"
+            echo "- 문서 경로: \`${{ steps.today.outputs.doc_path }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create issue for today's problem
+        if: steps.today.outputs.active == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const date = "${{ steps.today.outputs.date }}";
+            const problemId = "${{ steps.today.outputs.problem_id }}";
+            const problemTitle = "${{ steps.today.outputs.problem_title }}";
+            const bojUrl = "${{ steps.today.outputs.boj_url }}";
+            const docPath = "${{ steps.today.outputs.doc_path }}";
+            const title = `[코테스터디] ${date} - ${problemId} ${problemTitle}`;
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "all",
+              per_page: 100,
+            });
+
+            const exists = issues.find((i) => i.title === title);
+            if (exists) {
+              core.info(`이미 생성된 이슈가 있어 생성을 건너뜁니다: #${exists.number}`);
+              return;
+            }
+
+            const body = [
+              "오늘의 코딩테스트 스터디 문제입니다.",
+              "",
+              `- 날짜: ${date} (KST)`,
+              `- 문제: [${problemId} - ${problemTitle}](${bojUrl})`,
+              `- 문서 경로: \`${docPath}\``,
+              "",
+              "체크리스트",
+              "- [ ] 문제 읽기",
+              "- [ ] 풀이 구현",
+              "- [ ] 예외 케이스 점검",
+              "- [ ] README/메모 정리",
+            ].join("\n");
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ["study-schedule", "boj"],
+            });
+
+      - name: Send Slack daily notification
+        if: steps.today.outputs.active == 'true' && env.SLACK_WEBHOOK_URL != ''
+        env:
+          DATE: ${{ steps.today.outputs.date }}
+          PROBLEM_ID: ${{ steps.today.outputs.problem_id }}
+          PROBLEM_TITLE: ${{ steps.today.outputs.problem_title }}
+          BOJ_URL: ${{ steps.today.outputs.boj_url }}
+          DOC_PATH: ${{ steps.today.outputs.doc_path }}
+          DOC_URL: ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/${{ steps.today.outputs.doc_path }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          doc_path = os.environ["DOC_PATH"]
+          doc_url = os.environ["DOC_URL"]
+          text = (
+              "📚 *코테 스터디 오늘의 문제 알림*\n"
+              f"- 날짜(KST): {os.environ['DATE']}\n"
+              f"- 문제: <{os.environ['BOJ_URL']}|{os.environ['PROBLEM_ID']} - {os.environ['PROBLEM_TITLE']}>\n"
+              f"- 문서 경로: <{doc_url}|{doc_path}>\n"
+              "- 모두 코딩테스트의 문제를 풀어주세요"
+          )
+
+          payload = json.dumps({"text": text}).encode("utf-8")
+          req = urllib.request.Request(
+              os.environ["SLACK_WEBHOOK_URL"],
+              data=payload,
+              headers={"Content-Type": "application/json"},
+          )
+          urllib.request.urlopen(req).read()
+          PY

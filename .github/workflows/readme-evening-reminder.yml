@@ -1,0 +1,39 @@
+name: README Evening Reminder
+
+on:
+  schedule:
+    # Mon–Fri 19:00 KST (10:00 UTC)
+    - cron: "0 10 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Send Slack from README schedule and mark README
+        run: python scripts/readme_evening_reminder.py --readme README.md
+
+      - name: Commit README if updated
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          if git diff --staged --quiet; then
+            echo "No README changes to commit."
+          else
+            git commit -m "chore: README 저녁 알림 전송 체크"
+            git push
+          fi
