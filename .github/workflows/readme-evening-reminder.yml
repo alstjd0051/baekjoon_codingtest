@@ -35,5 +35,6 @@ jobs:
             echo "No README changes to commit."
           else
             git commit -m "chore: README 저녁 알림 전송 체크"
+            git pull --rebase origin "${{ github.ref_name }}"
             git push
           fi

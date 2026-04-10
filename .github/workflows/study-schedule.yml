@@ -109,6 +109,7 @@ jobs:
             echo "문서 변경 없음"
           else
             git commit -m "docs: 오늘의 백준 문제 스냅샷 (${{ steps.today.outputs.date }} ${{ steps.today.outputs.problem_id }})"
+            git pull --rebase origin "${{ github.ref_name }}"
             git push
           fi
 
