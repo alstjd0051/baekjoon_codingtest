@@ -173,7 +173,6 @@ jobs:
                           f"*일정*: <{readme}|README.md 주차별 표>\n"
                           f"*오늘의 문제*: <{boj}|{pid} — {title}>\n"
                           f"*문제 노트(로컬 크롤)*: <{doc_url}|{doc_path}>\n"
-                          "_GitHub Actions에서는 크롤/커밋하지 않습니다._"
                       ),
                   },
               },
