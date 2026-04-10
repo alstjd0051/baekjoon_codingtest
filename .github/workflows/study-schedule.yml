@@ -100,6 +100,8 @@ jobs:
             const body = [
               "오늘의 코딩테스트 스터디 문제입니다. (일정: `README.md` 주차별 표)",
               "",
+              "cc @hwirim @kjs33322222-alt",
+              "",
               `- 날짜: ${date} (KST)`,
               `- 문제: [${problemId} - ${problemTitle}](${bojUrl})`,
               `- 문제 노트(로컬 크롤 시): \`${docPath}\``,
