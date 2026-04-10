@@ -21,8 +21,13 @@ DEFAULT_SCHEDULE_CSV = (
 DEFAULT_OUTPUT = ROOT / "docs" / "problems.md"
 DEFAULT_DOCS_DIR = ROOT / "docs" / "problems"
 
-ROW_PATTERN = re.compile(
-    r"^\|\s*(\d{4}-\d{2}-\d{2})\s*\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*\[바로가기\]\((https://www\.acmicpc\.net/problem/\d+)\)\s*\|$"
+# 레거시(4열): | 날짜 | 번호 | 제목 | 링크 |
+ROW_PATTERN_LEGACY = re.compile(
+    r"^\|\s*(\d{4}-\d{2}-\d{2})\s*\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*\[바로가기\]\((https://www\.acmicpc\.net/problem/\d+)\)\s*\|\s*$"
+)
+# README(5열): | 알림 | 날짜 | 번호 | 제목 | 링크 |
+ROW_PATTERN_WITH_ALERT = re.compile(
+    r"^\|\s*[^|]*\|\s*(\d{4}-\d{2}-\d{2})\s*\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*\[바로가기\]\((https://www\.acmicpc\.net/problem/\d+)\)\s*\|\s*$"
 )
 SECTION_IDS = {
     "description": "problem_description",
@@ -79,7 +84,7 @@ def parse_readme_table(readme_text: str) -> list[tuple[str, str, str, str]]:
     items: list[tuple[str, str, str, str]] = []
     for raw_line in readme_text.splitlines():
         line = raw_line.strip()
-        match = ROW_PATTERN.match(line)
+        match = ROW_PATTERN_WITH_ALERT.match(line) or ROW_PATTERN_LEGACY.match(line)
         if match is None:
             continue
         items.append(match.groups())
