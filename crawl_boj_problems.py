@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
+import random
 import re
 import time
 from dataclasses import dataclass
@@ -35,6 +37,29 @@ LIMIT_PATTERN = re.compile(
 SECTION_PATTERN_TEMPLATE = r'<div[^>]*id="{section_id}"[^>]*>(.*?)</div>'
 TAG_PATTERN = re.compile(r"<[^>]+>")
 WS_PATTERN = re.compile(r"\s+")
+
+# 백준/프록시에서 일시적으로 403·429 등을 줄 때 재시도 대상으로 둠
+RETRYABLE_HTTP_STATUS = frozenset({403, 429, 500, 502, 503, 504})
+
+# Ubuntu CI와 로컬 모두 자연스러운 브라우저 UA (환경변수로 덮어쓰기 가능)
+_DEFAULT_USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/131.0.0.0 Safari/537.36"
+)
+
+
+def _request_headers(url: str) -> dict[str, str]:
+    ua = os.environ.get("BOJ_CRAWL_USER_AGENT", _DEFAULT_USER_AGENT)
+    headers: dict[str, str] = {
+        "User-Agent": ua,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Cache-Control": "no-cache",
+        "Upgrade-Insecure-Requests": "1",
+    }
+    if "acmicpc.net" in url:
+        headers["Referer"] = "https://www.acmicpc.net/"
+    return headers
 
 
 @dataclass
@@ -127,19 +152,32 @@ def extract_section(html: str, section_id: str) -> str:
     return strip_html(match.group(1))
 
 
-def fetch_html(url: str, timeout: float) -> str:
-    request = Request(
-        url,
-        headers={
-            "User-Agent": (
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_0) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/123.0.0.0 Safari/537.36"
-            )
-        },
-    )
-    with urlopen(request, timeout=timeout) as response:
-        return response.read().decode("utf-8", errors="replace")
+def fetch_html(
+    url: str,
+    timeout: float,
+    *,
+    max_attempts: int,
+    retry_backoff: float,
+) -> str:
+    """HTTP 요청. 403/429 등은 지수 백오프 후 재시도."""
+    attempts = max(1, max_attempts)
+    for attempt in range(attempts):
+        try:
+            request = Request(url, headers=_request_headers(url))
+            with urlopen(request, timeout=timeout) as response:
+                return response.read().decode("utf-8", errors="replace")
+        except HTTPError as exc:
+            if exc.code in RETRYABLE_HTTP_STATUS and attempt < attempts - 1:
+                wait = retry_backoff * (2**attempt) + random.uniform(0.25, 0.75)
+                time.sleep(wait)
+                continue
+            raise
+        except (URLError, TimeoutError) as exc:
+            if attempt < attempts - 1:
+                wait = retry_backoff * (2**attempt) + random.uniform(0.25, 0.75)
+                time.sleep(wait)
+                continue
+            raise
 
 
 def parse_problem_html(
@@ -241,6 +279,8 @@ def crawl(
     docs_dir: Path | None,
     delay: float,
     timeout: float,
+    max_attempts: int,
+    retry_backoff: float,
     fail_fast: bool,
 ) -> int:
     if source == "csv":
@@ -262,7 +302,12 @@ def crawl(
     for index, (date, problem_id, title_in_readme, url) in enumerate(rows, start=1):
         print(f"[{index}/{len(rows)}] 크롤링 중: {problem_id} - {title_in_readme.strip()}")
         try:
-            html = fetch_html(url, timeout=timeout)
+            html = fetch_html(
+                url,
+                timeout,
+                max_attempts=max_attempts,
+                retry_backoff=retry_backoff,
+            )
             results.append(
                 parse_problem_html(html, date, problem_id, title_in_readme, url)
             )
@@ -352,6 +397,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="각 요청 타임아웃(초)",
     )
     parser.add_argument(
+        "--max-attempts",
+        type=int,
+        default=5,
+        help="문제 페이지당 최대 HTTP 시도 횟수 (403/429 등 시 재시도)",
+    )
+    parser.add_argument(
+        "--retry-backoff",
+        type=float,
+        default=1.5,
+        help="재시도 전 기본 대기(초). 지수 증가·무작위 지터 적용",
+    )
+    parser.add_argument(
         "--fail-fast",
         action="store_true",
         help="첫 실패에서 즉시 중단",
@@ -375,6 +432,8 @@ def main() -> int:
         docs_dir=docs_dir,
         delay=args.delay,
         timeout=args.timeout,
+        max_attempts=args.max_attempts,
+        retry_backoff=args.retry_backoff,
         fail_fast=args.fail_fast,
     )
 

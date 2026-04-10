@@ -95,7 +95,9 @@ jobs:
             --target-date "${{ steps.today.outputs.date }}" \
             --output "docs/problems.md" \
             --docs-dir "docs/problems" \
-            --delay 0.2
+            --delay 0.5 \
+            --max-attempts 6 \
+            --retry-backoff 2
 
       - name: Commit crawled docs to repository
         if: steps.today.outputs.active == 'true'
