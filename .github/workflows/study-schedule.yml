@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -76,8 +78,22 @@ jobs:
             echo "문서 변경 없음"
           else
             git commit -m "docs: 오늘의 백준 문제 스냅샷 (${{ steps.today.outputs.date }} ${{ steps.today.outputs.problem_id }})"
-            git pull --rebase origin "${{ github.ref_name }}"
-            git push
+            branch="${{ github.ref_name }}"
+            pushed=""
+            for attempt in 1 2 3 4 5; do
+              git fetch origin "$branch"
+              git rebase "origin/$branch" || { echo "rebase 실패"; exit 1; }
+              if git push origin "$branch"; then
+                pushed=1
+                break
+              fi
+              echo "push 거부/실패 — 재시도 $attempt/5 (잠시 대기)"
+              sleep $((attempt * 3))
+            done
+            if [ -z "$pushed" ]; then
+              echo "push 실패 (5회 시도)"
+              exit 1
+            fi
           fi
 
       - name: Write summary

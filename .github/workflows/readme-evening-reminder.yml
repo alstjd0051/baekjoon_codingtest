@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -35,6 +37,19 @@ jobs:
             echo "No README changes to commit."
           else
             git commit -m "chore: README 저녁 알림 전송 체크"
-            git pull --rebase origin "${{ github.ref_name }}"
-            git push
+            branch="${{ github.ref_name }}"
+            pushed=""
+            for attempt in 1 2 3 4 5; do
+              git fetch origin "$branch"
+              git rebase "origin/$branch" || { echo "rebase failed"; exit 1; }
+              if git push origin "$branch"; then
+                pushed=1
+                break
+              fi
+              echo "push failed, retry $attempt/5"
+              sleep $((attempt * 3))
+            done
+            if [ -z "$pushed" ]; then
+              exit 1
+            fi
           fi
