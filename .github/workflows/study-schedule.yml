@@ -13,8 +13,6 @@ permissions:
 jobs:
   remind:
     runs-on: ubuntu-latest
-    env:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -121,9 +119,11 @@ jobs:
               labels: ["study-schedule", "boj"],
             });
 
-      - name: Send Slack daily notification
-        if: steps.today.outputs.active == 'true' && env.SLACK_WEBHOOK_URL != ''
+      - name: Send 코테 스터디 일정 알림 to Slack
+        if: steps.today.outputs.active == 'true'
         env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          README_URL: ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/README.md
           DATE: ${{ steps.today.outputs.date }}
           PROBLEM_ID: ${{ steps.today.outputs.problem_id }}
           PROBLEM_TITLE: ${{ steps.today.outputs.problem_title }}
@@ -131,22 +131,52 @@ jobs:
           DOC_PATH: ${{ steps.today.outputs.doc_path }}
           DOC_URL: ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/${{ steps.today.outputs.doc_path }}
         run: |
+          if [ -z "${SLACK_WEBHOOK_URL:-}" ]; then
+            echo "::warning::저장소 Secrets에 SLACK_WEBHOOK_URL이 없어 Slack으로 보내지 않습니다."
+            {
+              echo ""
+              echo "### Slack"
+              echo "웹훅 미설정으로 알림을 건너뜀. [Incoming Webhook](https://api.slack.com/messaging/webhooks) URL을 \`SLACK_WEBHOOK_URL\` 시크릿으로 등록하세요."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
           python - <<'PY'
           import json
           import os
           import urllib.request
 
+          date = os.environ["DATE"]
+          pid = os.environ["PROBLEM_ID"]
+          title = os.environ["PROBLEM_TITLE"]
+          boj = os.environ["BOJ_URL"]
           doc_path = os.environ["DOC_PATH"]
           doc_url = os.environ["DOC_URL"]
-          text = (
-              "📚 *코테 스터디 오늘의 문제* (`README.md` 일정)\n"
-              f"- 날짜(KST): {os.environ['DATE']}\n"
-              f"- 문제: <{os.environ['BOJ_URL']}|{os.environ['PROBLEM_ID']} - {os.environ['PROBLEM_TITLE']}>\n"
-              f"- 노트 경로(로컬 크롤 시): <{doc_url}|{doc_path}>\n"
-              "- Actions에서는 크롤/커밋하지 않습니다."
-          )
+          readme = os.environ["README_URL"]
 
-          payload = json.dumps({"text": text}).encode("utf-8")
+          fallback = (
+              f"[코테 스터디 일정 알림] {date} (KST) — {pid} {title}\n{boj}"
+          )
+          blocks = [
+              {
+                  "type": "header",
+                  "text": {"type": "plain_text", "text": "코테 스터디 일정 알림"},
+              },
+              {
+                  "type": "section",
+                  "text": {
+                      "type": "mrkdwn",
+                      "text": (
+                          f"*오늘(KST)*: `{date}`\n"
+                          f"*일정*: <{readme}|README.md 주차별 표>\n"
+                          f"*오늘의 문제*: <{boj}|{pid} — {title}>\n"
+                          f"*문제 노트(로컬 크롤)*: <{doc_url}|{doc_path}>\n"
+                          "_GitHub Actions에서는 크롤/커밋하지 않습니다._"
+                      ),
+                  },
+              },
+          ]
+          payload = json.dumps({"text": fallback, "blocks": blocks}).encode("utf-8")
           req = urllib.request.Request(
               os.environ["SLACK_WEBHOOK_URL"],
               data=payload,
@@ -154,3 +184,5 @@ jobs:
           )
           urllib.request.urlopen(req).read()
           PY
+
+          echo "Slack 알림 전송 완료" >> "$GITHUB_STEP_SUMMARY"
