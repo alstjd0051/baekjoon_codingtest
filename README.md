@@ -14,7 +14,7 @@
 | ✓    | 2026-04-11 | 5430      | AC                                | [바로가기](https://www.acmicpc.net/problem/5430)  |
 | ✓    | 2026-04-12 | 11286     | 절댓값 힙                         | [바로가기](https://www.acmicpc.net/problem/11286) |
 | ✓    | 2026-04-13 | 3107      | IPv6                              | [바로가기](https://www.acmicpc.net/problem/3107)  |
-|      | 2026-04-14 | 1141      | 접두사                            | [바로가기](https://www.acmicpc.net/problem/1141)  |
+| ✓ | 2026-04-14 | 1141 | 접두사 | [바로가기](https://www.acmicpc.net/problem/1141) |
 |      | 2026-04-15 | 20529     | 가장 가까운 세 사람의 심리적 거리 | [바로가기](https://www.acmicpc.net/problem/20529) |
 |      | 2026-04-16 | 9251      | LCS                               | [바로가기](https://www.acmicpc.net/problem/9251)  |
 |      | 2026-04-17 | 11478     | 서로 다른 부분 문자열의 개수      | [바로가기](https://www.acmicpc.net/problem/11478) |
