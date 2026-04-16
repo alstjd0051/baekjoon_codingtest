@@ -2,8 +2,8 @@ name: README Evening Reminder
 
 on:
   schedule:
-    # Mon–Fri 19:00 KST (10:00 UTC)
-    - cron: "0 10 * * 1-5"
+    # 매일 19:00 KST (10:00 UTC) — README 일정에 주말 행이 있으므로 동일 시각에 실행
+    - cron: "0 10 * * *"
   workflow_dispatch:
 
 permissions:

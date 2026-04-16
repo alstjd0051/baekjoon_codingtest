@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""README.md 주차별 표에서 오늘(KST) 일정을 읽어 Slack 알림 후 체크(✓)를 기록합니다."""
+"""README.md 주차별 표에서 오늘(KST) 일정을 읽어 Slack(선택) 알림 후 알림 열에 체크(✓)를 기록합니다."""
 
 from __future__ import annotations
 
@@ -72,7 +72,7 @@ def send_slack(webhook: str, today: str, problem_id: str, title: str, boj_url: s
         "📌 *오늘의 코테 스터디 (README 일정)*\n"
         f"- 날짜(KST): {today}\n"
         f"- 문제: <{boj_url}|{problem_id} - {title}>\n"
-        "- 평일 저녁 리마인더입니다."
+        "- 저녁 리마인더입니다."
     )
     payload = json.dumps({"text": text}).encode("utf-8")
     req = urllib.request.Request(
@@ -91,10 +91,6 @@ def main() -> int:
     args = parser.parse_args()
 
     now = datetime.now(ZoneInfo("Asia/Seoul"))
-    if now.weekday() >= 5:
-        print("주말: 알림 대상 아님", file=sys.stderr)
-        return 0
-
     today = now.date().isoformat()
     text = args.readme.read_text(encoding="utf-8")
     lines, rows, row_line_indices = parse_table_lines(text)
@@ -118,20 +114,21 @@ def main() -> int:
     boj_url = f"https://www.acmicpc.net/problem/{problem_id}"
 
     webhook = os.environ.get("SLACK_WEBHOOK_URL", "").strip()
-    if not webhook:
-        print("SLACK_WEBHOOK_URL 비어 있음: Slack 전송·README 갱신 생략", file=sys.stderr)
-        return 0
-
-    try:
-        send_slack(webhook, today, problem_id, title, boj_url)
-    except urllib.error.URLError as e:
-        print(f"Slack 전송 실패: {e}", file=sys.stderr)
-        return 1
+    if webhook:
+        try:
+            send_slack(webhook, today, problem_id, title, boj_url)
+        except urllib.error.URLError as e:
+            print(f"Slack 전송 실패(README 체크는 계속 진행): {e}", file=sys.stderr)
+    else:
+        print(
+            "SLACK_WEBHOOK_URL 미설정: Slack은 건너뛰고 README 알림 열만 갱신합니다.",
+            file=sys.stderr,
+        )
 
     cells[0] = "✓"
     lines[line_idx] = rebuild_row_line(cells)
     args.readme.write_text("\n".join(lines) + ("\n" if text.endswith("\n") else ""), encoding="utf-8")
-    print(f"{today}: Slack 전송 및 README 체크 완료")
+    print(f"{today}: README 알림 열 체크 완료")
     return 0
 
 

@@ -104,7 +104,7 @@ jobs:
               "",
               `- 날짜: ${date} (KST)`,
               `- 문제: [${problemId} - ${problemTitle}](${bojUrl})`,
-              `- 문제 노트(로컬 크롤 시): \`${docPath}\``,
+              `- 문제 노트: \`${docPath}\``,
               "",
               "체크리스트",
               "- [ ] 문제 읽기",
@@ -172,7 +172,7 @@ jobs:
                           f"*오늘(KST)*: `{date}`\n"
                           f"*일정*: <{readme}|README.md 주차별 표>\n"
                           f"*오늘의 문제*: <{boj}|{pid} — {title}>\n"
-                          f"*문제 노트(로컬 크롤)*: <{doc_url}|{doc_path}>\n"
+                          f"*문제 노트*: <{doc_url}|{doc_path}>\n"
                       ),
                   },
               },
