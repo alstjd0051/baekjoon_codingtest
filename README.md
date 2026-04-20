@@ -20,7 +20,7 @@
 | ✓ | 2026-04-17 | 11478 | 서로 다른 부분 문자열의 개수 | [바로가기](https://www.acmicpc.net/problem/11478) |
 | ✓ | 2026-04-18 | 3568 | iSharp | [바로가기](https://www.acmicpc.net/problem/3568) |
 | ✓ | 2026-04-19 | 6324 | URLs | [바로가기](https://www.acmicpc.net/problem/6324) |
-|      | 2026-04-20 | 1260      | DFS와 BFS                         | [바로가기](https://www.acmicpc.net/problem/1260)  |
+| ✓ | 2026-04-20 | 1260 | DFS와 BFS | [바로가기](https://www.acmicpc.net/problem/1260) |
 |      | 2026-04-21 | 2644      | 촌수계산                          | [바로가기](https://www.acmicpc.net/problem/2644)  |
 |      | 2026-04-22 | 7576      | 토마토                            | [바로가기](https://www.acmicpc.net/problem/7576)  |
 |      | 2026-04-23 | 14725     | 개미굴                            | [바로가기](https://www.acmicpc.net/problem/14725) |
