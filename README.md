@@ -22,7 +22,7 @@
 | ✓ | 2026-04-19 | 6324 | URLs | [바로가기](https://www.acmicpc.net/problem/6324) |
 | ✓ | 2026-04-20 | 1260 | DFS와 BFS | [바로가기](https://www.acmicpc.net/problem/1260) |
 | ✓ | 2026-04-21 | 2644 | 촌수계산 | [바로가기](https://www.acmicpc.net/problem/2644) |
-|      | 2026-04-22 | 7576      | 토마토                            | [바로가기](https://www.acmicpc.net/problem/7576)  |
+| ✓ | 2026-04-22 | 7576 | 토마토 | [바로가기](https://www.acmicpc.net/problem/7576) |
 |      | 2026-04-23 | 14725     | 개미굴                            | [바로가기](https://www.acmicpc.net/problem/14725) |
 |      | 2026-04-24 | 12849     | 본대 산책                         | [바로가기](https://www.acmicpc.net/problem/12849) |
 |      | 2026-04-25 | 3273      | 두 수의 합                        | [바로가기](https://www.acmicpc.net/problem/3273)  |
