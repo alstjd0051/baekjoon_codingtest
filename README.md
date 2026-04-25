@@ -25,7 +25,7 @@
 | ✓ | 2026-04-22 | 7576 | 토마토 | [바로가기](https://www.acmicpc.net/problem/7576) |
 | ✓ | 2026-04-23 | 14725 | 개미굴 | [바로가기](https://www.acmicpc.net/problem/14725) |
 | ✓ | 2026-04-24 | 12849 | 본대 산책 | [바로가기](https://www.acmicpc.net/problem/12849) |
-|      | 2026-04-25 | 3273      | 두 수의 합                        | [바로가기](https://www.acmicpc.net/problem/3273)  |
+| ✓ | 2026-04-25 | 3273 | 두 수의 합 | [바로가기](https://www.acmicpc.net/problem/3273) |
 |      | 2026-04-26 | 2467      | 용액                              | [바로가기](https://www.acmicpc.net/problem/2467)  |
 |      | 2026-04-27 | 11053     | 가장 긴 증가하는 부분 수열        | [바로가기](https://www.acmicpc.net/problem/11053) |
 |      | 2026-04-28 | 1912      | 연속합                            | [바로가기](https://www.acmicpc.net/problem/1912)  |
