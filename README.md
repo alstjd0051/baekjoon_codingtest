@@ -28,7 +28,7 @@
 | ✓ | 2026-04-25 | 3273 | 두 수의 합 | [바로가기](https://www.acmicpc.net/problem/3273) |
 | ✓ | 2026-04-26 | 2467 | 용액 | [바로가기](https://www.acmicpc.net/problem/2467) |
 | ✓ | 2026-04-27 | 11053 | 가장 긴 증가하는 부분 수열 | [바로가기](https://www.acmicpc.net/problem/11053) |
-|      | 2026-04-28 | 1912      | 연속합                            | [바로가기](https://www.acmicpc.net/problem/1912)  |
+| ✓ | 2026-04-28 | 1912 | 연속합 | [바로가기](https://www.acmicpc.net/problem/1912) |
 |      | 2026-04-29 | 14728     | 벼락치기                          | [바로가기](https://www.acmicpc.net/problem/14728) |
 |      | 2026-04-30 | 9252      | LCS2                              | [바로가기](https://www.acmicpc.net/problem/9252)  |
 |      | 2026-05-01 | 1005      | ACM Craft                         | [바로가기](https://www.acmicpc.net/problem/1005)  |
