@@ -33,7 +33,7 @@
 | ✓ | 2026-04-30 | 9252 | LCS2 | [바로가기](https://www.acmicpc.net/problem/9252) |
 | ✓ | 2026-05-01 | 1005 | ACM Craft | [바로가기](https://www.acmicpc.net/problem/1005) |
 | ✓ | 2026-05-02 | 13706 | 제곱근 | [바로가기](https://www.acmicpc.net/problem/13706) |
-|      | 2026-05-03 | 10827     | a^b                               | [바로가기](https://www.acmicpc.net/problem/10827) |
+| ✓ | 2026-05-03 | 10827 | a^b | [바로가기](https://www.acmicpc.net/problem/10827) |
 
 <br>
 
